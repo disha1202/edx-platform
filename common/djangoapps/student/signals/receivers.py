@@ -105,8 +105,10 @@ if is_name_affirmation_installed():
 
 
 @receiver(USER_EMAIL_CHANGED)
-def _listen_for_user_email_changed(sender, user, **kwargs):
-    """ If user has changed their email, update that in email Braze. """
+def _listen_for_user_email_changed(sender, user, request, **kwargs):
+    """ If user has changed their email, update that in session and Braze profile. """
+    request.session['email'] = user.email
+
     email = user.email
     user_id = user.id
     attributes = [{'email': email, 'external_id': user_id}]

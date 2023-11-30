@@ -2224,6 +2224,9 @@ MIDDLEWARE = [
     #'django.contrib.auth.middleware.AuthenticationMiddleware',
     'openedx.core.djangoapps.cache_toolbox.middleware.CacheBackedAuthenticationMiddleware',
 
+    # Middleware to flush user's session in other browsers when their email is changed.
+    'openedx.core.djangoapps.safe_sessions.middleware.EmailVerificationMiddleware',
+
     'common.djangoapps.student.middleware.UserStandingMiddleware',
     'openedx.core.djangoapps.contentserver.middleware.StaticContentServer',
 
