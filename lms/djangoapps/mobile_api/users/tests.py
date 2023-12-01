@@ -36,6 +36,7 @@ from lms.djangoapps.mobile_api.testutils import (
 )
 from lms.djangoapps.mobile_api.utils import API_V1, API_V05, API_V2, API_V3
 from openedx.core.lib.courses import course_image_url
+from openedx.core.djangoapps.discussions.models import DiscussionsConfiguration
 from openedx.features.course_duration_limits.models import CourseDurationLimitConfig
 from openedx.features.course_experience.tests.views.helpers import add_course_mode
 from xmodule.course_block import DEFAULT_START_DATE  # lint-amnesty, pylint: disable=wrong-import-order
@@ -650,7 +651,10 @@ class TestCourseStatusPATCH(CourseStatusAPITestCase, MobileAuthUserTestMixin,
 
 
 @ddt.ddt
-@patch.dict(settings.FEATURES, {'ENABLE_MKTG_SITE': True})
+@patch.dict(settings.FEATURES, {
+    'ENABLE_MKTG_SITE': True,
+    'ENABLE_DISCUSSION_SERVICE': True
+})
 @override_settings(MKTG_URLS={'ROOT': 'dummy-root'})
 class TestCourseEnrollmentSerializer(MobileAPITestCase, MilestonesTestCaseMixin):
     """
@@ -713,3 +717,19 @@ class TestCourseEnrollmentSerializer(MobileAPITestCase, MilestonesTestCaseMixin)
         assert serialized['course']['number'] == self.course.display_coursenumber
         assert serialized['course']['org'] == self.course.display_organization
         self._expiration_in_response(serialized, api_version)
+
+    @ddt.data(True, False)
+    def test_discussion_tab_url(self, discussion_tab_enabled):
+        """
+        Tests discussion tab url is None if tab is disabled
+        """
+        config, _ = DiscussionsConfiguration.objects.get_or_create(context_key=self.course.id)
+        config.enabled = discussion_tab_enabled
+        config.save()
+        serialized = self.get_serialized_data(API_V2)
+        discussion_url = serialized["course"]["discussion_url"]
+        if discussion_tab_enabled:
+            assert discussion_url is not None
+            assert isinstance(discussion_url, str)
+        else:
+            assert discussion_url is None
